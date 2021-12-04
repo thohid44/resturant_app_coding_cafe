@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:fooderlich/widgets/custom_text_filed.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -15,6 +17,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   XFile? imageXFile;
   final ImagePicker _picker = ImagePicker();
 
+// This function using for picke image
+  Future<void> _getImage() async {
+    imageXFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      imageXFile;
+    });
+  }
+
   final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -23,6 +34,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
       TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+
+// This code for get location
+  Position? position;
+  List<Position>? placeMarks;
+
+  getCurrentLocation() async {
+    Position newPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
+    position = newPosition;
+    //  placeMarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+    // Placemark pMark = placeMarks![0];
+    position = (await placemarkFromCoordinates(
+        position!.latitude, position!.longitude)) as Position?;
+    Placemark pMark = placeMarks![0] as Placemark;
+
+    String completeAddress =
+        '${pMark.subThoroughfare}  ${pMark.thoroughfare} ${pMark.subLocality} ${pMark.locality},${pMark.subAdministrativeArea} ${pMark.administrativeArea} ${pMark.postalCode}, ${pMark.country}';
+
+    _locationController.text = completeAddress;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -30,6 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           const SizedBox(height: 10),
           InkWell(
+            onTap: () => _getImage(),
             child: CircleAvatar(
               radius: MediaQuery.of(context).size.width * 0.20,
               backgroundColor: Colors.white,
@@ -90,7 +124,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       "Get my Current Location ",
                       style: TextStyle(color: Colors.white),
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      getCurrentLocation();
+                    },
                     icon: const Icon(
                       Icons.location_on,
                       color: Colors.white,
